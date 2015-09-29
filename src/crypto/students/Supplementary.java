@@ -46,8 +46,6 @@ public class Supplementary
 
 		return new BigInteger(result_bianry_string,2);
 		
-		// log.error("You must implement this function!");
-		// return BigInteger.ZERO;
 	}
 
 	/***
@@ -61,8 +59,6 @@ public class Supplementary
 	public static BigInteger deriveSuppementaryKey(BigInteger key, BigInteger p)
 	{
 		return key.mod(p);
-		// log.error("You must implement this function!");
-		// return BigInteger.ZERO;
 	}
 
 	private static String xorBinaryString(String str1, String str2)

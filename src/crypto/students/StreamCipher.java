@@ -33,8 +33,6 @@ public class StreamCipher
 	public void updateShiftRegister()
 	{
 		// r_i=(a x r_(i-1) + b ) mod p;
-
-		// log.error("You must implement this function!");
 	}
 
 	/***
@@ -42,8 +40,8 @@ public class StreamCipher
 	 */
 	public void reset()
 	{
-
-		// log.error("You must implement this function!");
+		// R0=CheckSum(kAB)
+		this.r_i=Supplementary.parityWordChecksum(this.key);
 	}
 
 	/***
@@ -63,8 +61,6 @@ public class StreamCipher
 		Byte result = Byte.valueOf(binary_msb, 2);
 		return result.byteValue();
 
-		// log.error("You must implement this function!");
-		// return (byte)0x00;
 	}
 
 	/***
