@@ -1,0 +1,105 @@
+Report for COMP90043 - Project A part 2
+Kunliang Wu / 684226
+
+*******************************************************************
+==============================================================
+*******************************************************************
+
+I.About Man-in-the-middle-attack
+---------------------------------------------------------------
+The main idea of MITMA is : 
+The attacker impersonate himself to be the sender when facing the receiver,
+and to be the receiver when facing the sender, and letting both sides in the 
+communication believe they are talking to the right person or entity as they
+wish.
+
+Taking Diffie-Hellman key exchange protocol as an example:
+
+	[Alice]			[Eve]		      [Bob]
+	    |-----A=g^a mod p---->|		        |
+	    |			  |-----Z=g^z mod p---->|
+	    |			  |<----B=g^b mod p-----|
+	    |<-----Z=g^z mod p----|		        |
+    K(A)=Z^a mod p	  K(A)=A^z mod p	K(B)=Z^b mod p
+			  K(B)=B^z mod p
+
+As you can see, Eve can get two pair of keys, K(A) is used to communicate with Alice,
+And K(B) is used to communicate with Bob. Both Alice and Bob think they are talking
+to each other without realizing that the encrypted messages can be seen and even modified
+by Eve here.
+
+To achieve this goal, the attacker has to hijack the message exchange while the two sides
+are trying to negotiating a common key using some specific protocol. Also it requires a 
+effective way to forge its own identity.a
+
+*******************************************************************
+===================================================================
+*******************************************************************
+
+II.About the security and usage viability in a production environment
+of the stream cipher 
+-------------------------------------------------------------------
+Stream Cipher takes the plaintext as an input stream.While encrypting or decrypting a message,
+it will process the message with the corresponding digit of the keystream digit by digit.
+
+Since the only calculation is the key stream generation and the combining operation, 
+its processing speed is higher than that of block ciphers. 
+
+	a.)Security
+	The stream cipher is similar to the one-time pad discussed in the lecture,
+	in which if the key is totally random then it shall be considered as unbreakable.
+
+	However, the keystream is not completely random but a pseudorandom cipher digit stream,
+	the main problem is all about how well the keystream can do resembling a totally random one-pad.
+	so the key stream must have the following two charateristics: 
+		1.>generated completely at random with at least the same length as the plaintext 
+		2.>cannot be used more than once
+
+	For point 1.>, if it is not totally random and has some certain patterns, then the attacker
+	may find some clues to generate the keys using the found patterns.
+
+	For point 2.>, this means the key stream must have a large period , making it is impossible 
+	to recover the cipher's key and the inner state during one valid conversation between the two sides.
+
+	Further more, the same starting state (seed) must never be used twice.
+	The reason is that for a certain given algorithm , when the starting state is settled, the following 
+	digits can be calculated.
+
+	As we can see the project code in Java, once an instance of StreamCipher Class is initiated,
+	all the key-stream can be predicted, if we use it twice in different communication phase,
+	the attacker can use some given-plaintext and cipher-text strategy to get the key.
+	The whole scheme will then be no longer secure.
+
+	That's why the code in the project is not practical:  
+	private void communicationPhase() throws IOException, ParseException {
+		...
+		// Reset the Shift Register prior to sending out CLIENT_TEXT messages
+		streamCipher.reset();
+		
+		// Send all text to Server
+		sendAllLines();
+		...
+	}
+
+	Besides, in order to  guard against brute-force attacks, the key needs to be sufficiently long. 
+	That's why we tend to choose at least 128bits to ensure that the length is long enough.
+
+	Another disadvantage is there is not enough diffusion to let the ciphertext getting influenced by
+	as many bits in plaintext as possible, while ONE-BIT change in plaintext can have an avalanche
+	effect on the cipher text using Block Cipher.
+
+			*	*	*
+
+	b.)Stream Cipher Usage
+	Because it has a advantages of a higher speed and simplicity of implementation, it is widely used 
+	in the fields like en/decrypting keys for other secure method and messages with unpredictable size,
+	just like ECB in block cipher. A good example is in Wi-Fi hot spot we are currently using everyday.
+
+	For the router producers who go after block cipher in their products, they have to spend more 
+	resources to solve the dilemma choosing bewteen transmission efficiency or implementation complexity. 
+	Sometimes you have to padding or stuffing even more bits than the original plaintext. But stream cipher
+	would not be bothered on this issue.
+	
+	However,the two sides do need to figure out a way of negotiating the algorithm to generata the key stream
+	at first place.
+	In our project,the two sides are actually using Diffie-Hellman, which makes it vuneralble to MITMA.
